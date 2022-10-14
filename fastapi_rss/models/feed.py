@@ -109,8 +109,15 @@ class RSSFeed(BaseModel):
                 RSSFeed._generate_tree_default(root, key, value)
 
     def tostring(self, nsmap: Optional[Dict[str, str]] = None):
-        nsmap = nsmap or {}
+        nsmap = nsmap or {'atom': 'http://www.w3.org/2005/Atom'}
         rss = etree.Element('rss', version='2.0', nsmap=nsmap)
         channel = etree.SubElement(rss, 'channel')
         RSSFeed.generate_tree(channel, self.dict())
-        return etree.tostring(rss, pretty_print=True, xml_declaration=True)
+
+        if "docs" in self.dict().keys() and 'http://www.w3.org/2005/Atom' in nsmap.values():
+            atom_link = etree.SubElement(channel, '{http://www.w3.org/2005/Atom}link', nsmap=nsmap)
+            atom_link.set('href', self.dict()['docs'])
+            atom_link.set('rel', 'self')
+            atom_link.set('type', 'application/rss+xml')
+
+        return etree.tostring(rss, pretty_print=True, xml_declaration=True, encoding='UTF-8')
